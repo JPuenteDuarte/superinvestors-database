@@ -10,7 +10,7 @@ def read_db_credentials(file_path):
     return credentials
 
 def connect_to_db():
-    file_path = 'BD_connection.txt'
+    file_path = 'DB_connection.txt'
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"the file was not found in the given path: {file_path}")
     
@@ -60,13 +60,9 @@ def create_tables():
         """)
 
         conn.commit()
-        print("Tables created successfully")
 
     except psycopg2.Error as e:
         print("Error when trying to connect to PostgreSQL:", e)
     finally:
         if conn:
             conn.close()
-
-if __name__ == "__main__":
-    create_tables()

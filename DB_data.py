@@ -12,8 +12,6 @@ def read_db_credentials(file_path):
             credentials[key] = value
     return credentials
 
-file_path = 'BD_connection.txt'
-credentials = read_db_credentials(file_path)
 
 def fetch_table(url, headers):
     try:
@@ -52,103 +50,81 @@ def fetch_table(url, headers):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
-file_path = 'BD_connection.txt'
-credentials = read_db_credentials(file_path)
+def load_superinvestors():
+    file_path = 'DB_connection.txt'
+    credentials = read_db_credentials(file_path)
+    connection_string = f"postgresql+psycopg2://{credentials['username']}:{credentials['password']}@{credentials['host']}:{credentials['port']}/{credentials['database']}"
+    engine = create_engine(connection_string)
+    url = "https://www.dataroma.com/m/managers.php"
+    headers = {"User-Agent": "your-user-agent"}
+    superinv_df = fetch_table(url, headers)
+    superinv_df.columns = superinv_df.iloc[0]
+    superinv_df = superinv_df[1:]
+    superinv_df = superinv_df.drop(columns=["Portfolio value", "No. of stocks"])
+    superinv_df = superinv_df.rename(columns={'Portfolio Manager - Firm': 'fund'})
+    superinv_df.rename(columns={None: 'id'}, inplace=True)
+    table_name = 'superinvestors'
+    with engine.connect() as connection:
+        connection.execute(text(f'DROP TABLE IF EXISTS {table_name} CASCADE'))
+        superinv_df.to_sql(table_name, engine, if_exists='append', index=False)
 
-connection_string = f"postgresql+psycopg2://{credentials['username']}:{credentials['password']}@{credentials['host']}:{credentials['port']}/{credentials['database']}"
-engine = create_engine(connection_string)
 
-url = "https://www.dataroma.com/m/managers.php"
-headers = {"User-Agent": "your-user-agent"}
-superinv_df = fetch_table(url, headers)
 
-superinv_df.columns = superinv_df.iloc[0]
-superinv_df = superinv_df[1:]
-superinv_df = superinv_df.drop(columns=["Portfolio value", "No. of stocks"])
-superinv_df = superinv_df.rename(columns={'Portfolio Manager - Firm': 'fund'})
-superinv_df.rename(columns={None: 'id'}, inplace=True)
+def generate_companies():
+    wikicolumns = {
+        'Symbol': 'symbol',
+        'Security': 'name',
+        'GICS Sector': 'industry',
+        'GICS Sub-Industry': 'sub_industry',
+        'Ticker': 'symbol',
+        'Company': 'name',
+        'Sector [10]': 'industry',
+        'Industry [10]': 'sub_industry'
+    }
+    wiki_links = {
+        'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies': 0,
+        'https://en.wikipedia.org/wiki/S%26P/TSX_Composite_Index': 3,
+        'https://en.wikipedia.org/wiki/Russell_1000_Index': 2,
+        'https://en.wikipedia.org/wiki/Nasdaq-100': 4,
+    }
 
-table_name = 'superinvestors'
+    all_tables = []
+    for url in list(wiki_links.keys()):
+        tables = pd.read_html(url)
+        table_wiki = tables[wiki_links[url]]
+        table_wiki = table_wiki.rename(columns=wikicolumns)
+        all_tables.append(table_wiki)
 
-with engine.connect() as connection:
-    connection.execute(text(f'DROP TABLE IF EXISTS {table_name} CASCADE'))
-    superinv_df.to_sql(table_name, engine, if_exists='append', index=False)
+    symbols_db_table = pd.concat(all_tables, axis=0)[['symbol', 'name', 'industry', 'sub_industry']].reset_index(drop=True)
+    symbols_db_table.drop_duplicates(subset=['symbol'], keep='first', inplace=True)
+    symbols_db_table.dropna(subset=['symbol'], inplace=True)
+    return symbols_db_table
 
-print("DataFrame exported correctly to the table 'superinvestors'.")
 
-connection_string = f"postgresql+psycopg2://{credentials['username']}:{credentials['password']}@{credentials['host']}:{credentials['port']}/{credentials['database']}"
-engine = create_engine(connection_string)
+def load_companies():
+    industry_duplicates = {
+        'Healthcare': 'Health Care',
+        'Consumer Cyclical': 'Consumer Discretionary',
+        'Financials': 'Financial Services',
+        'Consumer Staples':'Consumer Defensive',
+        'Materials':'Basic Materials'
+    }
+    companies = generate_companies()
+    companies['industry'] = companies['industry'].replace(industry_duplicates)
+    companies['industry'].unique()
+    table_name = 'companies'
 
-wikiurl = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
-tables = pd.read_html(wikiurl)
-table_companies = tables[0]
-columns_drop = ['Headquarters Location','Date added','CIK','Founded']
-table_companies = table_companies.drop(columns=columns_drop)
-table_companies = table_companies.rename(columns={
-    'Symbol': 'symbol',
-    'Security': 'name',
-    'GICS Sector': 'industry',
-    'GICS Sub-Industry': 'sub_industry'
-})
+    file_path = 'DB_connection.txt'
+    credentials = read_db_credentials(file_path)
+    connection_string = f"postgresql+psycopg2://{credentials['username']}:{credentials['password']}@{credentials['host']}:{credentials['port']}/{credentials['database']}"
+    engine = create_engine(connection_string)
+    with engine.connect() as connection:
+        companies.to_sql(table_name, engine, if_exists='append', index=False)
+        
 
-wikiurl_2 = 'https://en.wikipedia.org/wiki/S%26P/TSX_Composite_Index'
-tables_2 = pd.read_html(wikiurl_2)
-table_companies_2 = tables_2[3]
-table_companies_2 = table_companies_2.rename(columns={
-    'Ticker': 'symbol',
-    'Company': 'name',
-    'Sector [10]': 'industry',
-    'Industry [10]': 'sub_industry'
-})
-
-wikiurl_3 = 'https://en.wikipedia.org/wiki/Russell_1000_Index'
-tables_3 = pd.read_html(wikiurl_3)
-table_companies_3 = tables_3[2]
-table_companies_3 = table_companies_3[['Symbol','Company','GICS Sector','GICS Sub-Industry']]
-table_companies_3 = table_companies_3.rename(columns={
-    'Symbol': 'symbol',
-    'Company': 'name',
-    'GICS Sector': 'industry',
-    'GICS Sub-Industry': 'sub_industry'
-})
-
-wikiurl_4 = 'https://en.wikipedia.org/wiki/Nasdaq-100'
-tables_4 = pd.read_html(wikiurl_4)
-table_companies_4 = tables_4[4]
-table_companies_4 = table_companies_4[['Ticker','Company','GICS Sector','GICS Sub-Industry']]
-table_companies_4 = table_companies_4.rename(columns={
-    'Ticker': 'symbol',
-    'Company': 'name',
-    'GICS Sector': 'industry',
-    'GICS Sub-Industry': 'sub_industry'
-})
-
-companies = pd.concat([table_companies, table_companies_2, table_companies_3, table_companies_4], axis=0)
-companies.drop_duplicates(subset=['symbol'], keep='first', inplace=True)
-companies.dropna(subset=['symbol'], inplace=True)
-
-industry_duplicates = {
-    'Healthcare': 'Health Care',
-    'Consumer Cyclical': 'Consumer Discretionary',
-    'Financials': 'Financial Services',
-    'Consumer Staples':'Consumer Defensive',
-    'Materials':'Basic Materials'
-}
-
-companies['industry'] = companies['industry'].replace(industry_duplicates)
-companies['industry'].unique()
-
-table_name = 'companies'
-
-with engine.connect() as connection:
-    companies.to_sql(table_name, engine, if_exists='append', index=False)
-
-print("DataFrame exported correctly to the table 'companies'.")
 
 def fetch_activity(fund,buy_or_sell, page):
-    
     url = 'https://www.dataroma.com/m/m_activity.php?m=%s&typ=%s&L=%s&o=a' % (fund, buy_or_sell[0], page)
-
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
         'Accept-Encoding': 'gzip, deflate, br, zstd',
@@ -166,15 +142,15 @@ def fetch_activity(fund,buy_or_sell, page):
         'Upgrade-Insecure-Requests': '1',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
     }
-
     response = requests.get(url, headers=headers)
-
     if response.status_code == 200:
         return response.text
     else:
         print(f'Error: {response.status_code}')
         return None
 
+
+                      
 def extract_strings(s, substring1, substring2):
     substrings = []
     start = 0
@@ -190,30 +166,32 @@ def extract_strings(s, substring1, substring2):
         start = end_index + len(substring2)
     return substrings
 
+
+
 def extract_transactions(s, transaction_type, fund):
     substring1_symbol = """/m/hist/hist.php?f=%s&s=""" % fund
     substring2_symbol = """" title="Holding/activity history"""
     substring1_stock = """<td class="%s">""" % transaction_type
     substring2_stock = """</td>"""
-
     symbols = extract_strings(s, substring1_symbol, substring2_symbol)
     stocks = extract_strings(s, substring1_stock, substring2_stock)
-    
-    Activity = [stocks[i] for i in range(0, len(stocks)) if i % 2 == 0]
+    # Activity = [stocks[i] for i in range(0, len(stocks)) if i % 2 == 0]
     Share_change = [stocks[i] for i in range(0, len(stocks)) if i % 2 != 0]
-
-    lista = {
+    list_shares = {
         'symbol': symbols,
         'share_change': Share_change
     }
-    df_activity = pd.DataFrame(lista)
+    df_activity = pd.DataFrame(list_shares)
     df_activity['transaction_type'] = transaction_type
     if len(df_activity)>0:    
         df_activity['share_change'] = df_activity['share_change'].str.replace(',', '').astype(float)
     return df_activity
 
+
+
 def dividir_por_delimitador(s):
     return s.split("""colspan="5"><b>""")
+
 
 def fund_transactions(action_taken, fund):
     all_transactions_df = []
@@ -232,6 +210,7 @@ def fund_transactions(action_taken, fund):
     final_df = pd.concat(all_transactions_df)
     return(final_df)
 
+
 def read_db_credentials(file_path):
     credentials = {}
     with open(file_path, 'r') as file:
@@ -240,30 +219,24 @@ def read_db_credentials(file_path):
             credentials[key] = value
     return credentials
 
-file_path = 'BD_connection.txt'
 
-if not os.path.exists(file_path):
-    raise FileNotFoundError(f"The file cannot be found in the given location: {file_path}")
+def load_activity():
+    file_path = 'BD_connection.txt'
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"The file cannot be found in the given location: {file_path}")
+    credentials = read_db_credentials(file_path)
+    connection_string = f"postgresql+psycopg2://{credentials['username']}:{credentials['password']}@{credentials['host']}:{credentials['port']}/{credentials['database']}"
+    engine = create_engine(connection_string)
+    query = "SELECT * FROM superinvestors"
+    df = pd.read_sql(query, engine)
+    funds = df.iloc[:, 1].tolist()
 
-credentials = read_db_credentials(file_path)
+    all_funds_transactions = []
+    for fund in funds:
+        fund_buy = fund_transactions('buy', fund)
+        fund_sell = fund_transactions('sell', fund)
+        all_funds_transactions.append(fund_buy)
+        all_funds_transactions.append(fund_sell)
+    funds_activity = pd.concat(all_funds_transactions)
+    funds_activity.to_sql('activity', engine, if_exists='replace', index=False)
 
-connection_string = f"postgresql+psycopg2://{credentials['username']}:{credentials['password']}@{credentials['host']}:{credentials['port']}/{credentials['database']}"
-engine = create_engine(connection_string)
-
-query = "SELECT * FROM superinvestors"
-
-df = pd.read_sql(query, engine)
-
-funds = df.iloc[:, 1].tolist()
-
-all_funds_transactions = []
-for fund in funds:
-    fund_buy = fund_transactions('buy', fund)
-    fund_sell = fund_transactions('sell', fund)
-    all_funds_transactions.append(fund_buy)
-    all_funds_transactions.append(fund_sell)
-funds_activity = pd.concat(all_funds_transactions)
-
-funds_activity.to_sql('activity', engine, if_exists='replace', index=False)
-
-print("DataFrame exported correctly to the table 'activity'.")
