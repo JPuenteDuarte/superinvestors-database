@@ -1,6 +1,7 @@
 import pandas as pd
 import requests
 import os
+import psycopg2
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine, text
 
@@ -11,7 +12,6 @@ def read_db_credentials(file_path):
             key, value = line.strip().split('=')
             credentials[key] = value
     return credentials
-
 
 def fetch_table(url, headers):
     try:
@@ -34,15 +34,17 @@ def fetch_table(url, headers):
                             row_data.append(arg)
                         else:
                             row_data.append(first_cell.get_text(strip=True))
-                            row_data.append(None)  
+                            row_data.append(None)
                         
-                        row_data.append(cells[1].get_text(strip=True))  
-                        row_data.append(cells[2].get_text(strip=True))  
+                        row_data.append(cells[1].get_text(strip=True))
+                        row_data.append(cells[2].get_text(strip=True))
+
                         data.append(row_data)
                 
                 columns = ['Portfolio Manager - Firm', 'Code', 'Portfolio value', 'No. of stocks']
-                superinv_df = pd.DataFrame(data, columns=columns)
-                return superinv_df
+                
+                df = pd.DataFrame(data, columns=columns)
+                return df
             else:
                 print("No rows found in the table.")
         else:
@@ -50,7 +52,29 @@ def fetch_table(url, headers):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
+# Example usage:
+url = "https://www.dataroma.com/m/managers.php"
+headers = {"User-Agent": "your-user-agent"}
+df = fetch_table(url, headers)
+    
+def connect_to_db():
+    file_path = 'DB_connection.txt'
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"El archivo no se encontró en la ruta dada: {file_path}")
+    
+    credentials = read_db_credentials(file_path)
+    
+    conn = psycopg2.connect(
+        database=credentials["database"],
+        user=credentials["username"],  
+        password=credentials["password"],
+        host=credentials["host"],
+        port=credentials["port"]
+    )
+    return conn
+
 def load_superinvestors():
+    conn = connect_to_db()  
     file_path = 'DB_connection.txt'
     credentials = read_db_credentials(file_path)
     connection_string = f"postgresql+psycopg2://{credentials['username']}:{credentials['password']}@{credentials['host']}:{credentials['port']}/{credentials['database']}"
@@ -58,15 +82,23 @@ def load_superinvestors():
     url = "https://www.dataroma.com/m/managers.php"
     headers = {"User-Agent": "your-user-agent"}
     superinv_df = fetch_table(url, headers)
-    superinv_df.columns = superinv_df.iloc[0]
-    superinv_df = superinv_df[1:]
-    superinv_df = superinv_df.drop(columns=["Portfolio value", "No. of stocks"])
-    superinv_df = superinv_df.rename(columns={'Portfolio Manager - Firm': 'fund'})
-    superinv_df.rename(columns={None: 'id'}, inplace=True)
-    table_name = 'superinvestors'
-    with engine.connect() as connection:
-        connection.execute(text(f'DROP TABLE IF EXISTS {table_name} CASCADE'))
-        superinv_df.to_sql(table_name, engine, if_exists='append', index=False)
+    
+    if superinv_df is not None:
+        if not superinv_df.empty:
+            superinv_df.columns = superinv_df.iloc[0]
+            superinv_df = superinv_df[1:]
+            superinv_df = superinv_df.drop(columns=["Portfolio value", "No. of stocks"], errors='ignore')
+            superinv_df = superinv_df.rename(columns={'Portfolio Manager - Firm': 'fund'})
+            superinv_df.rename(columns={None: 'id'}, inplace=True)
+            
+            table_name = 'superinvestors'
+            with engine.connect() as connection:
+                connection.execute(text(f'DROP TABLE IF EXISTS {table_name} CASCADE'))
+                superinv_df.to_sql(table_name, engine, if_exists='append', index=False)
+        else:
+            print("El DataFrame está vacío.")
+    else:
+        print("El DataFrame es None.")
 
 
 
@@ -89,9 +121,9 @@ def generate_companies():
     }
 
     all_tables = []
-    for url in list(wiki_links.keys()):
-        tables = pd.read_html(url)
-        table_wiki = tables[wiki_links[url]]
+    for urls in list(wiki_links.keys()):
+        tables = pd.read_html(urls)
+        table_wiki = tables[wiki_links[urls]]
         table_wiki = table_wiki.rename(columns=wikicolumns)
         all_tables.append(table_wiki)
 
@@ -221,7 +253,7 @@ def read_db_credentials(file_path):
 
 
 def load_activity():
-    file_path = 'BD_connection.txt'
+    file_path = 'DB_connection.txt'
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"The file cannot be found in the given location: {file_path}")
     credentials = read_db_credentials(file_path)
