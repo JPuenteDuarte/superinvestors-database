@@ -11,6 +11,12 @@ This chart illustrates the trading activity for the selected funds
 
 ![Quarterly trading activity](Trading_activity_by_fund.jpg)  
 
+## Activity by Industry
+
+This chart illustrates the sub-industry activity by industry 
+
+![Activity by Industry](Sub-industries_by_industry.jpg)
+
 ## Top 3 investors for NVIDIA activity 
 
 This chart illustrates the trading activity for a selection of funds
@@ -29,8 +35,4 @@ This chart shows the total activity by fund, displaying the top 20 funds by tota
 
 ![Total Activity by Fund](activity_by_fund.jpg)
 
-## Activity by Industry
 
-This chart illustrates the sub-industry activity by industry 
-
-![Activity by Industry](Sub-industries_by_industry.jpg)
