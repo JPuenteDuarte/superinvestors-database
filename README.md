@@ -9,7 +9,7 @@ These are some examples of uses for the superinvestors database,
 
 This chart illustrates the trading activity for the selected funds
 
-![Quarterly trading activity](Trading activity by fund.jpg)  
+![Quarterly trading activity](Trading_activity_by_fund.jpg)  
 
 ## Top 3 investors for NVIDIA activity 
 
@@ -33,4 +33,4 @@ This chart shows the total activity by fund, displaying the top 20 funds by tota
 
 This chart illustrates the sub-industry activity by industry 
 
-![Activity by Industry](Sub-industries by industry.jpg)
+![Activity by Industry](Sub-industries_by_industry.jpg)
