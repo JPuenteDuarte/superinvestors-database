@@ -15,13 +15,13 @@ These are some graphical examples of uses for the superinvestors database:
 
 ## Selected funds, quarterly trading activity 
 
-This chart illustrates the trading activity for the selected funds, it can be used to analyze which funds have higher activity 
+This chart illustrates the trading activity for the selected funds, showing which funds are more active in buying and selling securities each quarter. It can be used to analyze which funds have higher activity, helping to identify the most dynamic and responsive funds in the market. Additionally, it provides insights into how different funds adjust their portfolios in response to market conditions, allowing for a deeper understanding of their investment strategies and timing.
 
 ![Quarterly trading activity](Trading_activity_by_fund.jpg)  
 
 ## Activity by Industry
 
-This chart illustrates the sub-industry activity by industry, it can be used to analyze the industry a fund is more specialized on
+This chart illustrates the sub-industry activity within each industry, highlighting where funds are concentrating their investments. It can be used to analyze which industries a fund is more specialized in, offering a view into the sectors that a particular fund is betting on for growth.
 
 ![Activity by Industry](Sub-industries_by_industry.jpg)
 
