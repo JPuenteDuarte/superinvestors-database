@@ -1,5 +1,5 @@
 # superinvestors-database
-This project involves scraping and analyzing the transactions of superinvestors over the last five years, with data sourced from Dataroma.com, a platform that tracks the investments of renowned fund managers like Warren Buffett, Bill Ackman, and others.
+This project involves scraping and analyzing the transactions of superinvestors over the last five years from Dataroma.com, a platform that tracks the investments of renowned fund managers like Warren Buffett, Bill Ackman, and others.
 
 Here are some of the uses of this database;
 1. Study superinvestors' portfolio adjustments each quarter to detect trends in their buying and selling choices.
