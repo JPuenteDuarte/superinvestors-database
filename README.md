@@ -21,7 +21,7 @@ This chart illustrates the trading activity for the selected funds, showing whic
 
 ## Activity by Industry
 
-This chart illustrates the sub-industry activity within each industry, highlighting where funds are concentrating their investments. It can be used to analyze which industries a fund is more specialized in, offering a view into the sectors that a particular fund is betting on for growth.
+This chart illustrates the industry activity within each sector, highlighting where funds are concentrating their investments. It can be used to analyze which industries a fund is more specialized in, offering a view into the sectors that a particular fund is betting on for growth.
 
 ![Activity by Industry](Sub-industries_by_industry.jpg)
 
@@ -39,8 +39,10 @@ This chart illustrates the trading activity for a selection of funds, it can hel
 
 ## Total Activity by Fund
 
-This chart shows the total activity by fund, displaying the top 20 funds by total shares.
+This chart illustrates the total trading activity of each fund, showcasing the top 20 funds based on the total number of shares traded. It provides insights into which funds are the most active overall, allowing for a deeper understanding of their market influence and investment strategies.
 
 ![Total Activity by Fund](activity_by_fund.jpg)
+
+
 
 
