@@ -1,5 +1,5 @@
 # superinvestors-database
-Analysis of superinvestors transactions for the last 5 years extracted from Dataroma.com, a platform that tracks the investments of renowned fund managers like Warren Buffett, Bill Ackman, and others.
+Analysis of superinvestors transactions for the last 5 years scraped from Dataroma.com, a platform that tracks the investments of renowned fund managers like Warren Buffett, Bill Ackman, and others.
 
 Here are some of the uses of this database;
 1. Study superinvestors' portfolio adjustments each quarter to detect trends in their buying and selling choices.
@@ -15,25 +15,25 @@ These are some graphical examples of uses for the superinvestors database:
 
 ## Selected funds, quarterly trading activity 
 
-This chart illustrates the trading activity for the selected funds
+This chart illustrates the trading activity for the selected funds, it can be used to analyze which funds have higher activity 
 
 ![Quarterly trading activity](Trading_activity_by_fund.jpg)  
 
 ## Activity by Industry
 
-This chart illustrates the sub-industry activity by industry 
+This chart illustrates the sub-industry activity by industry, it can be used to analyze the industry a fund is more specialized on
 
 ![Activity by Industry](Sub-industries_by_industry.jpg)
 
 ## Top 3 investors for NVIDIA activity 
 
-This chart illustrates the trading activity for a selection of funds
+This chart illustrates the trading activity for a selection of funds, it can be used to understand how major market players make decisions about high-profile stocks like NVIDIA and AMD
 
 ![Trading activity NVIDIA](activity_by_symbol_NVDA.jpg)  
 
 ## Top 3 investors for AMD activity 
 
-This chart illustrates the trading activity for a selection of funds
+This chart illustrates the trading activity for a selection of funds, it can help identify trends in how top investors have traded NVIDIA and AMD stocks over time.
 
 ![Trading activity AMD](activity_by_symbol_AMD.jpg)  
 
